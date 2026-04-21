@@ -1,0 +1,13 @@
+@namespace("com.java.seed.user_order.events")
+record UserOrderEventKey {
+	uuid userId;
+	uuid orderId;
+}
+
+@namespace("com.java.seed.user_order.events")
+record UserOrderEvent {
+	uuid userId;
+	string name;
+	uuid orderId;
+	timestamp_ms createdAt;
+}
