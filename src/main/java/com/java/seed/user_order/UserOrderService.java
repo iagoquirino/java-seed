@@ -20,7 +20,16 @@ class UserOrderService {
     }
 
     public void process(UserOrderEvent event) {
-        userOrderRepository.save(new UserOrder(UUID.randomUUID(), event.getUserId(), event.getOrderId()));
+        UserOrder entity = build(event);
+        userOrderRepository.save(entity);
         log.info("User order event persisted userId={}, orderId={}", event.getUserId(), event.getOrderId());
+    }
+
+    private UserOrder build(UserOrderEvent event) {
+        return UserOrder.builder()
+                .orderId(event.getOrderId())
+                .userId(event.getUserId())
+                .id(UUID.randomUUID())
+                .build();
     }
 }

@@ -1,25 +1,25 @@
 package com.java.seed.user;
 
-import com.java.seed.shared.Result;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import jakarta.validation.constraints.NotBlank;
+import com.java.seed.api.UsersApi;
+import com.java.seed.api.model.UserRequest;
+import com.java.seed.api.model.UserResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.java.seed.shared.Result.SUCCESS;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-public class UserController {
+public class UserController implements UsersApi {
 
     private final UserService userService;
 
-    UserResponse publish(@RequestBody UserRequest request) {
-        userService.publish(request);
-        return new UserResponse(SUCCESS);
+    @Override
+    public ResponseEntity<UserResponse> createUser(UserRequest userRequest) throws Exception {
+        UUID userId = userService.publish(userRequest);
+        return ResponseEntity.accepted().body(new UserResponse()
+                .userId(userId)
+                .result(UserResponse.ResultEnum.SUCCESS));
     }
-
-    record UserRequest(@NotBlank String name){}
-
-    record UserResponse(@NotBlank Result result){}
 }

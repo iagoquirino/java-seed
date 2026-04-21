@@ -1,10 +1,12 @@
 @namespace("com.java.seed.order.events")
-record OrderEventKey {
-	uuid orderId;
-}
+protocol OrderEvents {
+	record OrderEventKey {
+		uuid orderId;
+	}
 
-@namespace("com.java.seed.order.events")
-record OrderEvent {
-	uuid orderId;
-	timestamp_ms createdAt;
+	record OrderEvent {
+		uuid orderId;
+		uuid userId;
+		timestamp_ms createdAt;
+	}
 }

@@ -1,17 +1,19 @@
 package com.java.seed.user_order;
 
+import com.java.seed.user_order.events.UserOrderEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.BDDMockito;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.UUID;
 
+import static com.java.seed.shared.TestUtils.UserOrderInformation.givenUserOrder;
+import static com.java.seed.shared.TestUtils.UserOrderInformation.givenUserOrderEvent;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -20,6 +22,9 @@ class UserOrderServiceTest {
 
     @Mock
     private UserOrderRepository repository;
+
+    @Captor
+    private ArgumentCaptor<UserOrder> captor;
 
     private UserOrderService testObj;
 
@@ -31,16 +36,35 @@ class UserOrderServiceTest {
     @Test
     void list() {
         // given
-        List<UserOrder> mocked = List.of(new UserOrder(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
-
-        given(repository.findAll()).willReturn(mocked);
-
+        List<UserOrder> entities = List.of(givenUserOrder());
+        given(repository.findAll()).willReturn(entities);
 
         // when
         List<UserOrder> listFromDB = testObj.list();
 
         // then
-        assertThat(listFromDB).containsAll(mocked);
+        assertThat(listFromDB).containsAll(entities);
         then(repository).should().findAll();
     }
+
+    @Test
+    void process() {
+        // given
+        UserOrderEvent event = givenUserOrderEvent();
+
+        // when
+        testObj.process(event);
+
+        // then
+        then(repository).should().save(captor.capture());
+        UserOrder capturedValue = captor.getValue();
+        assertThat(capturedValue)
+                .usingRecursiveComparison()
+                .ignoringFields("id")
+                .isEqualTo(event);
+
+        assertThat(capturedValue.id()).isNotNull();
+    }
+
+
 }
