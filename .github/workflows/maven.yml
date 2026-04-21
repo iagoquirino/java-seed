@@ -17,5 +17,7 @@ jobs:
         java-version: '25'
         distribution: 'temurin'
         cache: maven
+    - name: Testcontainers config
+      run: echo "testcontainers.reuse.enable=true" >> ~/.testcontainers.properties
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn -B clean verify
