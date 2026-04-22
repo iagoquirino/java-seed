@@ -27,6 +27,22 @@ public abstract class TopologyTestDriverTest {
         this.setupTopology();
     }
 
+    public Serde serde(boolean isKey) {
+        SpecificAvroSerde specificAvroSerde = new SpecificAvroSerde<>(mockSchemaRegistryClient);
+        specificAvroSerde.configure(Map.of("schema.registry.url", "mock://test"), isKey);
+        return specificAvroSerde;
+    }
+
+
+    protected abstract StreamsBuilder setupStreams();
+
+    protected abstract void setupTopology();
+
+    @AfterEach
+    void tearDown() {
+        testDriver.close();
+    }
+
     private static @NotNull Properties getProperties() {
         Properties props = new Properties();
         String applicationId = UUID.randomUUID().toString();
@@ -36,20 +52,5 @@ public abstract class TopologyTestDriverTest {
         props.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kstream-%s".formatted(applicationId));
         props.put("schema.registry.url", "mock://test");
         return props;
-    }
-
-    public Serde serde(boolean isKey) {
-        SpecificAvroSerde specificAvroSerde = new SpecificAvroSerde(mockSchemaRegistryClient);
-        specificAvroSerde.configure(Map.of("schema.registry.url", "mock://test"), isKey);
-        return specificAvroSerde;
-    }
-
-
-    protected abstract StreamsBuilder setupStreams();
-    protected abstract void setupTopology();
-
-    @AfterEach
-    void tearDown() {
-        testDriver.close();
     }
 }

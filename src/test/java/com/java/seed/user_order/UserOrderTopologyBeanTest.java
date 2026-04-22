@@ -18,10 +18,11 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.test.TestRecord;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import static com.java.seed.shared.TestUtils.givenOrderEvent;
+import static com.java.seed.shared.TestUtils.givenUserEvent;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UserOrderTopologyBeanTest extends TopologyTestDriverTest {
@@ -29,16 +30,16 @@ class UserOrderTopologyBeanTest extends TopologyTestDriverTest {
     private static final String USER_TOPIC = "user_topic";
     private static final String ORDER_TOPIC = "order_topic";
 
-    private Serde<UserEventKey> userEventKeySerde = serde(true);
-    private Serde<UserEvent> userEventSerde = serde(false);
+    private final Serde<UserEventKey> userEventKeySerde = serde(true);
+    private final Serde<UserEvent> userEventSerde = serde(false);
     private TestInputTopic<UserEventKey, UserEvent> userTopic;
 
-    private Serde<OrderEventKey> orderEventKeySerde = serde(true);
-    private Serde<OrderEvent> orderEventSerde = serde(false);
+    private final Serde<OrderEventKey> orderEventKeySerde = serde(true);
+    private final Serde<OrderEvent> orderEventSerde = serde(false);
     private TestInputTopic<OrderEventKey, OrderEvent> orderTopic;
 
-    private Serde<UserOrderEventKey> userOrderEventKeySerde = serde(true);
-    private Serde<UserOrderEvent> userOrderEventSerde = serde(false);
+    private final Serde<UserOrderEventKey> userOrderEventKeySerde = serde(true);
+    private final Serde<UserOrderEvent> userOrderEventSerde = serde(false);
     private TestOutputTopic<UserOrderEventKey, UserOrderEvent> userOrderTopic;
 
     private static final String OUTPUT_TOPIC = "user_order_topic";
@@ -49,6 +50,7 @@ class UserOrderTopologyBeanTest extends TopologyTestDriverTest {
         KTable<UserEventKey, UserEvent> userEventKTable = streamsBuilder.stream(USER_TOPIC, Consumed.with(userEventKeySerde, userEventSerde))
                 .toTable();
         KStream<OrderEventKey, OrderEvent> orderEventKStream = streamsBuilder.stream(ORDER_TOPIC, Consumed.with(orderEventKeySerde, orderEventSerde));
+
         new UserOrderTopologyBean()
                 .userOrderTopology()
                 .apply(userEventKTable, orderEventKStream)
@@ -88,19 +90,35 @@ class UserOrderTopologyBeanTest extends TopologyTestDriverTest {
         assertThat(result.getName().toString()).isEqualTo("John Doe");
     }
 
-    private OrderEvent givenOrderEvent(UUID orderId, UUID userId) {
-        return OrderEvent.newBuilder()
-                .setOrderId(orderId)
-                .setUserId(userId)
-                .setCreatedAt(Instant.now())
-                .build();
+    @Test
+    void shouldNotReturnOnlyUserTopicPublished() {
+        // given
+        UUID userId = UUID.randomUUID();
+        UserEvent user = givenUserEvent(userId);
+
+        //when
+        userTopic.pipeInput(new UserEventKey(userId), user);
+
+        // then
+        List<TestRecord<UserOrderEventKey, UserOrderEvent>> events = userOrderTopic.readRecordsToList();
+
+        assertThat(events.isEmpty()).isTrue();
     }
 
-    private UserEvent givenUserEvent(UUID userId) {
-        return UserEvent.newBuilder()
-                .setUserId(userId)
-                .setName("John Doe")
-                .setCreatedAt(Instant.now())
-                .build();
+    @Test
+    void shouldNotReturnOnlyOrderTopicPublished() {
+        // given
+        UUID userId = UUID.randomUUID();
+
+        UUID orderId = UUID.randomUUID();
+        OrderEvent order = givenOrderEvent(orderId, userId);
+
+        //when
+        orderTopic.pipeInput(new OrderEventKey(orderId), order);
+
+        // then
+        List<TestRecord<UserOrderEventKey, UserOrderEvent>> events = userOrderTopic.readRecordsToList();
+
+        assertThat(events.isEmpty()).isTrue();
     }
 }

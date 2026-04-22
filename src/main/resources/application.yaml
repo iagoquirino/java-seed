@@ -18,7 +18,7 @@ spring:
       key-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       properties:
-        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+        schema.registry.url: ${configuration.kafka.schema-registry-url}
   cloud:
     function:
       definition: userOrderTopology;userOrderListener;
@@ -32,7 +32,7 @@ spring:
               specific.avro.reader: true
               default.key.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
               default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
-              schema.registry.url: "${spring.kafka.properties.schema.registry.url}"
+              schema.registry.url: ${configuration.kafka.schema-registry-url}
       bindings:
         userOrderTopology-in-0:
           destination: "${configuration.kafka.topics.user}"
@@ -46,6 +46,7 @@ spring:
 
 configuration:
   kafka:
+    schema-registry-url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
     application-prefix: java-seed
     topics:
       user: user_topic
